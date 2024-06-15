@@ -57,6 +57,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class
             ])
-            ->font('Be Vietnam Pro');
+            ->font('Figtree');
     }
 }
