@@ -9,6 +9,17 @@ use App\Policies\UserPolicy;
 use Gate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
+use Spatie\CpuLoadHealthCheck\CpuLoadCheck;
+use Spatie\Health\Checks\Checks\CacheCheck;
+use Spatie\Health\Checks\Checks\DatabaseCheck;
+use Spatie\Health\Checks\Checks\DatabaseSizeCheck;
+use Spatie\Health\Checks\Checks\OptimizedAppCheck;
+use Spatie\Health\Checks\Checks\PingCheck;
+use Spatie\Health\Checks\Checks\QueueCheck;
+use Spatie\Health\Checks\Checks\RedisCheck;
+use Spatie\Health\Checks\Checks\RedisMemoryUsageCheck;
+use Spatie\Health\Checks\Checks\UsedDiskSpaceCheck;
+use Spatie\Health\Facades\Health;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -36,6 +47,28 @@ class AppServiceProvider extends ServiceProvider
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
 
+        // Laravel Health
+        Health::checks([
+            CacheCheck::new(),
+            OptimizedAppCheck::new(),
+            CpuLoadCheck::new()
+                ->failWhenLoadIsHigherInTheLast5Minutes(2.0)
+                ->failWhenLoadIsHigherInTheLast15Minutes(1.5),
+            UsedDiskSpaceCheck::new()
+                ->warnWhenUsedSpaceIsAbovePercentage(60)
+                ->failWhenUsedSpaceIsAbovePercentage(80),
+            DatabaseCheck::new(),
+            DatabaseSizeCheck::new()
+                ->failWhenSizeAboveGb(errorThresholdGb: 5.0),
+            QueueCheck::new(),
+            RedisCheck::new(),
+            RedisMemoryUsageCheck::new()->failWhenAboveMb(1000),
+            PingCheck::new()
+                ->url('https://google.com')
+                ->name('Is Google reachable?'),
+        ]);
+
+        // Laravel Pulse
         Gate::define('viewPulse', function($user) {
             return $user;
         });
