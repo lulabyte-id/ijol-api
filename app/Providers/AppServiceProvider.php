@@ -2,9 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Policies\PermissionPolicy;
+use App\Policies\RolePolicy;
+use App\Policies\UserPolicy;
 use Gate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
+
+        $this->app->register(FilamentServiceProvider::class);
     }
 
     /**
@@ -31,5 +39,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewPulse', function($user) {
             return $user;
         });
+
+        // Register policies
+        Gate::policy(Permission::class, PermissionPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 }
