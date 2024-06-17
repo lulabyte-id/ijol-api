@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
-    return ['API Version' => app()->version()];
+    return ['version' => config('api.version')];
 });
 
 Route::middleware('auth:sanctum')->group( function () {
