@@ -8,6 +8,7 @@
         "php": "^8.2",
         "doctrine/dbal": "^3.8",
         "filament/filament": "^3.2",
+        "laravel/fortify": "^1.21",
         "laravel/framework": "^11.9",
         "laravel/pulse": "^1.2",
         "laravel/sanctum": "^4.0",
