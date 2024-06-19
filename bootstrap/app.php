@@ -5,6 +5,8 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Sentry\Laravel\Integration;
 
@@ -17,33 +19,54 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
+            \Illuminate\Session\Middleware\StartSession::class
         ]);
 
         $middleware->alias([
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
             'verified' => EnsureEmailIsVerified::class,
         ]);
 
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Handle exceptions to be in JSON format
-        $exceptions->render(function (Exception $exception) {
-            if (request()->is('admin*')) {
-                return;
-            };
-
-            if ($exception instanceof AuthenticationException) {
-                return response()->json([
+        if (!request()->is('admin*')) {
+            // Handle exceptions to be in JSON format
+            $exceptions->render(function (Exception $exception) {
+                $response = [
                     'message' => $exception->getMessage(),
-                ], 401);
-            }
+                ];
 
-            return response()->json([
-                'message' => $exception->getMessage(),
-            ], $exception->getStatusCode());
-        });
+                if (app()->hasDebugModeEnabled()) {
+                    $response['trace'] = $exception->getTrace();
+                }
 
-        // Sentry integration
+                if (request()->is('api/*')) {
+                    if ($exception instanceof AuthenticationException) {
+                        return response()->json([
+                            'message' => 'Unauthorized'
+                        ], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
+                    }
+
+                    if ($exception instanceof RuntimeException) {
+                        return response()->json([
+                            'message' => $exception->getMessage()
+                        ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
+                    }
+
+                    if ($exception instanceof \Laravel\Socialite\Two\InvalidStateException) {
+                        return response()->json([
+                           'message' => $exception->getMessage()
+                        ], \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
+                    }
+                }
+
+                return response()->json($response, $exception->getStatusCode());
+            });
+        };
+
+        // Handle exceptions with Sentry
         Integration::handles($exceptions);
     })
     ->create();

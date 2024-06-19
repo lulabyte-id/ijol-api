@@ -6,9 +6,12 @@ use App\Models\User;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
+use Event;
 use Gate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Facebook\Provider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 use Spatie\CpuLoadHealthCheck\CpuLoadCheck;
 use Spatie\Health\Checks\Checks\CacheCheck;
 use Spatie\Health\Checks\Checks\DatabaseCheck;
@@ -73,7 +76,15 @@ class AppServiceProvider extends ServiceProvider
             return $user;
         });
 
-        // Register policies
+        // Laravel Socialite Providers
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('facebook', Provider::class);
+            /*$event->extendSocialite('instagram', \SocialiteProviders\Instagram\Provider::class);
+            $event->extendSocialite('instagrambasic', \SocialiteProviders\InstagramBasic\Provider::class);*/
+            $event->extendSocialite('tiktok', \SocialiteProviders\TikTok\Provider::class);
+        });
+
+        // Admin Policies
         Gate::policy(Permission::class, PermissionPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(User::class, UserPolicy::class);

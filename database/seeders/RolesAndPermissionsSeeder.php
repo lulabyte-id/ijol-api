@@ -134,7 +134,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'remember_token' => Str::random(10),
         ])->assignRole($developerRole);
 
-        for ($i=1; $i < 10; $i++) {
+        for ($i=1; $i < 3; $i++) {
             User::create([
                 'name' => 'Test '.$i,
                 'is_admin' => 0,
