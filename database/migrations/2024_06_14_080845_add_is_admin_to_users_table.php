@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('is_admin')
+                ->default(0)
                 ->after('id')
                 ->default(false);
         });

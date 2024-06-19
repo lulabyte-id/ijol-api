@@ -48,6 +48,8 @@ return [
     */
 
     'expiration' => null,
+    'ac_expiration' => 60,              // 1 Hour
+    'rt_expiration' => 7 * 24 * 60,     // Refresh token: 7 Days
 
     /*
     |--------------------------------------------------------------------------
